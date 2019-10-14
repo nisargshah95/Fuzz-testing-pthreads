@@ -11,3 +11,8 @@ https://wiki.ubuntu.com/Kernel/BuildYourOwnKernel#Obtaining_the_source_for_an_Ub
 Build vanilla glibc -
 https://www.gnu.org/software/libc/sources.html
 https://www.gnu.org/software/libc/manual/html_node/Configuring-and-compiling.html
+
+Changes needed in files:
+-pthread_create.c
+-pthread_attr_setschedparam.c //don't let the user to make changes to sched param
+-pthread_attr_setschedpolicy.c //don't let the user to make changes to sched policy
