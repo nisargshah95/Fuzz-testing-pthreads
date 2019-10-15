@@ -13,9 +13,9 @@ https://www.gnu.org/software/libc/sources.html
 https://www.gnu.org/software/libc/manual/html_node/Configuring-and-compiling.html
 
 Changes needed in files:
--pthread_create.c
--pthread_attr_setschedparam.c //don't let the user to make changes to sched param
--pthread_attr_setschedpolicy.c //don't let the user to make changes to sched policy
+- pthread_create.c
+- pthread_attr_setschedparam.c //don't let the user to make changes to sched param
+- pthread_attr_setschedpolicy.c //don't let the user to make changes to sched policy
 
 Control program
 - Create multiple producer and one consumer, producers write their thread id X number of times.
