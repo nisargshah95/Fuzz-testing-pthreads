@@ -1,7 +1,7 @@
 # Fuzz-testing-pthreads
 
 
-Build glibc from ubuntu sources -
+## Build glibc from ubuntu sources -
 https://packages.ubuntu.com/bionic/glibc-source
 https://www.cmiss.org/cmgui/wiki/BuildingUbuntuPackagesFromSource
 
@@ -9,21 +9,21 @@ https://wiki.ubuntu.com/Kernel/BuildYourOwnKernel#Obtaining_the_source_for_an_Ub
 
 This doesn't look like a viable option because ubuntu sources are in form of diffs and not actual C files. It will be difficult to make changes.
 
-Build vanilla glibc -
+## Build vanilla glibc -
 https://www.gnu.org/software/libc/sources.html
 https://www.gnu.org/software/libc/manual/html_node/Configuring-and-compiling.html
 
 https://sourceware.org/glibc/wiki/Testing/Builds has steps to build and install glibc to a different location and run programs with both old and new glibc.
 
-Changes needed in files:
+## Changes needed in files:
 - pthread_create.c
 - pthread_attr_setschedparam.c //don't let the user to make changes to sched param
 - pthread_attr_setschedpolicy.c //don't let the user to make changes to sched policy
 
-Control program
+## Control program
 - Create multiple producer and one consumer, producers write their thread id X number of times.
 - Schedule producers using the configuration file. At then end see what is sitting in the queue.
 
-Main experiments
+## Main experiments
 - Run TPC-H queries on different DBMS's with original pthread lib and get the results.
 - Run TPC-H queries on different DBMS's with changed pthread lib and validate the results.
