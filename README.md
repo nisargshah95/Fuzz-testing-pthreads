@@ -7,10 +7,13 @@ https://www.cmiss.org/cmgui/wiki/BuildingUbuntuPackagesFromSource
 
 https://wiki.ubuntu.com/Kernel/BuildYourOwnKernel#Obtaining_the_source_for_an_Ubuntu_release
 
+This doesn't look like a viable option because ubuntu sources are in form of diffs and not actual C files. It will be difficult to make changes.
 
 Build vanilla glibc -
 https://www.gnu.org/software/libc/sources.html
 https://www.gnu.org/software/libc/manual/html_node/Configuring-and-compiling.html
+
+https://sourceware.org/glibc/wiki/Testing/Builds has steps to build and install glibc to a different location and run programs with both old and new glibc.
 
 Changes needed in files:
 - pthread_create.c
