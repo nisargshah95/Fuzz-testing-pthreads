@@ -1,37 +1,46 @@
 diff --git a/nptl/pthread_create.c b/nptl/pthread_create.c
-index 5682c9c2c0..b786c76b79 100644
+index 5682c9c2c0..691591dac6 100644
 --- a/nptl/pthread_create.c
 +++ b/nptl/pthread_create.c
-@@ -20,6 +20,7 @@
+@@ -20,6 +20,8 @@
  #include <errno.h>
  #include <stdbool.h>
  #include <stdlib.h>
 +#include <stdio.h>
++#include <time.h>
  #include <string.h>
  #include <stdint.h>
  #include "pthreadP.h"
-@@ -625,7 +626,27 @@ __pthread_create_2_1 (pthread_t *newthread, const pthread_attr_t *attr,
+@@ -625,7 +627,35 @@ __pthread_create_2_1 (pthread_t *newthread, const pthread_attr_t *attr,
  {
    STACK_VARIABLES;
  
 -  const struct pthread_attr *iattr = (struct pthread_attr *) attr;
 +  pthread_attr_t injectattr;
-+  if (pthread_attr_init(&injectattr) != 0)
++
++  int pthread_ret = pthread_attr_init(&injectattr);
++  if (pthread_ret != 0)
 +  {
-+    printf("Error calling pthread_attr_init\n");
++    printf("Error calling pthread_attr_init: %s\n", strerror(pthread_ret));
 +  }
-+  if (pthread_attr_setschedpolicy(&injectattr, SCHED_RR) != 0)
++  pthread_ret = pthread_attr_setschedpolicy(&injectattr, SCHED_RR);
++  if (pthread_ret != 0)
 +  {
-+    printf("Error calling pthread_attr_setschedpolicy\n");
++    printf("Error calling pthread_attr_setschedpolicy: %s\n", strerror(pthread_ret));
 +  }
-+  const struct sched_param injectparam = { 10 };
-+  if (pthread_attr_setschedparam(&injectattr, &injectparam) != 0)
++
++  srandom(time(NULL));
++  int rand_prio = random() % 100;
++  const struct sched_param injectparam = { rand_prio };
++  pthread_ret = pthread_attr_setschedparam(&injectattr, &injectparam);
++  if (pthread_ret != 0)
 +  {
-+    printf("Error calling pthread_attr_setschedparam\n");
++    printf("Error calling pthread_attr_setschedparam: %s\n", strerror(pthread_ret));
 +  }
-+  if (pthread_attr_setinheritsched(&injectattr, PTHREAD_EXPLICIT_SCHED) != 0)
++  pthread_ret = pthread_attr_setinheritsched(&injectattr, PTHREAD_EXPLICIT_SCHED);
++  if (pthread_ret != 0)
 +  {
-+    printf("Error calling pthread_attr_setinheritsched\n");
++    printf("Error calling pthread_attr_setinheritsched: %s\n", strerror(pthread_ret));
 +  }
 +
 +  // const struct pthread_attr *iattr = (struct pthread_attr *) attr;
