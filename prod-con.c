@@ -26,6 +26,7 @@ Website: richiejp.wordpress.com email: richiejp@gmail.com*/
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <string.h>
 
 void* producer(void*);
 void* consumer(void*);
@@ -45,12 +46,12 @@ struct Context{
 };
 
 int main(){
-	int numOfProducer = 4;
+	int numOfProducer = 2;
         volatile struct Context context;
         //context.cond = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
         context.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
         context.error = 0;
-	context.limit = 2000;
+	context.limit = 5000;
 	context.holder = (long int*)malloc(context.limit*numOfProducer*sizeof(long int));
 	context.index = 0;
          
@@ -60,14 +61,18 @@ int main(){
         pthread_t prod[numOfProducer]; 
         //pthread_t cons;
         
-	struct sched_param param;
-	param.sched_priority = 20;
+	const struct sched_param param = { 20 };
 
 	int i;
         for(i=0; i<numOfProducer; i++){
-		
-		if(pthread_create(&prod[i], NULL, producer, (void*)&context) != 0){
-		        puts("Could not create producer thread");
+                int ret;
+		pthread_attr_t attr;
+                pthread_attr_init(&attr);
+                pthread_attr_setschedpolicy(&attr, SCHED_RR);
+                pthread_attr_setschedparam(&attr, &param);
+                pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+		if((ret = pthread_create(&prod[i], &attr, producer, (void*)&context) != 0)){
+		        printf("Could not create producer thread: %s\n", strerror(ret));
 
 		        pthread_mutex_lock(context.mutex);
 		        context.error = 1;
@@ -78,7 +83,13 @@ int main(){
 		        
 		        return(EXIT_FAILURE);
 		}
-		pthread_setschedparam(prod[i], SCHED_FIFO, (void*)&param);
+                struct sched_param schedparam;
+                int policy;
+                ret = pthread_getschedparam(prod[i], &policy, &schedparam);
+                if(ret != 0) {
+                        printf("error fetching schedparams\n");
+                }
+                //printf("thread created with policy = %d and priority = %d\n", policy, schedparam.sched_priority);
         }
         /*puts("createing second thread");
         if(pthread_create(&cons, NULL, consumer, (void*)&context) != 0){
@@ -98,11 +109,12 @@ int main(){
         }*/
         
 	for(i=0; i<numOfProducer; i++){
+                //printf("%ld\n", prod[i]);
         	pthread_join(prod[i], NULL);
         }
 
 	for(i=0; i<context.limit*numOfProducer; i++){
-        	printf("%ld\n", context.holder[i]%100);
+        	printf("%ld\n", context.holder[i]%1000);
         }
 
 	//pthread_join(cons, NULL);
@@ -118,7 +130,7 @@ int main(){
 }
 
 void* producer(void* _context){
-        puts("in producer");
+        //puts("in producer");
         struct Context* context = (struct Context*)_context;
 
 	int i;
