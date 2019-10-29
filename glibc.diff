@@ -1,5 +1,5 @@
 diff --git a/nptl/pthread_create.c b/nptl/pthread_create.c
-index 5682c9c2c0..691591dac6 100644
+index 5682c9c2c0..e9537142dc 100644
 --- a/nptl/pthread_create.c
 +++ b/nptl/pthread_create.c
 @@ -20,6 +20,8 @@
@@ -11,40 +11,50 @@ index 5682c9c2c0..691591dac6 100644
  #include <string.h>
  #include <stdint.h>
  #include "pthreadP.h"
-@@ -625,7 +627,35 @@ __pthread_create_2_1 (pthread_t *newthread, const pthread_attr_t *attr,
+@@ -619,13 +621,45 @@ report_thread_creation (struct pthread *pd)
+ }
+ 
+ 
++int __assign_random_priority (pthread_attr_t *attr)
++{
++  int pthread_ret = 0;
++  srandom(time(NULL));
++  int rand_prio = random() % 100;
++  const struct sched_param param = { rand_prio };
++  if ((pthread_ret = pthread_attr_init(attr)) != 0)
++  {
++    printf("Error calling pthread_attr_init: %s\n", strerror(pthread_ret));
++  }
++  else if ((pthread_ret = pthread_attr_setschedpolicy(attr, SCHED_RR)) != 0)
++  {
++    printf("Error calling pthread_attr_setschedpolicy: %s\n", strerror(pthread_ret));
++  }
++  else if ((pthread_ret = pthread_attr_setschedparam(attr, &param)) != 0)
++  {
++    printf("Error calling pthread_attr_setschedparam: %s\n", strerror(pthread_ret));
++  }
++  else if ((pthread_ret = pthread_attr_setinheritsched(attr, PTHREAD_EXPLICIT_SCHED)) != 0)
++  {
++    printf("Error calling pthread_attr_setinheritsched: %s\n", strerror(pthread_ret));
++  }
++  return pthread_ret;
++}
++
+ int
+ __pthread_create_2_1 (pthread_t *newthread, const pthread_attr_t *attr,
+ 		      void *(*start_routine) (void *), void *arg)
  {
    STACK_VARIABLES;
  
 -  const struct pthread_attr *iattr = (struct pthread_attr *) attr;
-+  pthread_attr_t injectattr;
-+
-+  int pthread_ret = pthread_attr_init(&injectattr);
-+  if (pthread_ret != 0)
++  pthread_attr_t inject_attr;
++  if (__assign_random_priority(&inject_attr) != 0)
 +  {
-+    printf("Error calling pthread_attr_init: %s\n", strerror(pthread_ret));
-+  }
-+  pthread_ret = pthread_attr_setschedpolicy(&injectattr, SCHED_RR);
-+  if (pthread_ret != 0)
-+  {
-+    printf("Error calling pthread_attr_setschedpolicy: %s\n", strerror(pthread_ret));
-+  }
-+
-+  srandom(time(NULL));
-+  int rand_prio = random() % 100;
-+  const struct sched_param injectparam = { rand_prio };
-+  pthread_ret = pthread_attr_setschedparam(&injectattr, &injectparam);
-+  if (pthread_ret != 0)
-+  {
-+    printf("Error calling pthread_attr_setschedparam: %s\n", strerror(pthread_ret));
-+  }
-+  pthread_ret = pthread_attr_setinheritsched(&injectattr, PTHREAD_EXPLICIT_SCHED);
-+  if (pthread_ret != 0)
-+  {
-+    printf("Error calling pthread_attr_setinheritsched: %s\n", strerror(pthread_ret));
++    printf("Error assigning random priority to thread\n");
 +  }
 +
 +  // const struct pthread_attr *iattr = (struct pthread_attr *) attr;
-+  const struct pthread_attr *iattr = (struct pthread_attr *) &injectattr;
++  const struct pthread_attr *iattr = (struct pthread_attr *) &inject_attr;
    struct pthread_attr default_attr;
    bool free_cpuset = false;
    bool c11 = (attr == ATTR_C11_THREAD);
