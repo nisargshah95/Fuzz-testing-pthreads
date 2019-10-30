@@ -1,5 +1,5 @@
 diff --git a/nptl/pthread_create.c b/nptl/pthread_create.c
-index 5682c9c2c0..e9537142dc 100644
+index 5682c9c2c0..f29dfad4c8 100644
 --- a/nptl/pthread_create.c
 +++ b/nptl/pthread_create.c
 @@ -20,6 +20,8 @@
@@ -11,7 +11,7 @@ index 5682c9c2c0..e9537142dc 100644
  #include <string.h>
  #include <stdint.h>
  #include "pthreadP.h"
-@@ -619,13 +621,45 @@ report_thread_creation (struct pthread *pd)
+@@ -619,13 +621,55 @@ report_thread_creation (struct pthread *pd)
  }
  
  
@@ -48,13 +48,23 @@ index 5682c9c2c0..e9537142dc 100644
  
 -  const struct pthread_attr *iattr = (struct pthread_attr *) attr;
 +  pthread_attr_t inject_attr;
-+  if (__assign_random_priority(&inject_attr) != 0)
-+  {
-+    printf("Error assigning random priority to thread\n");
-+  }
 +
-+  // const struct pthread_attr *iattr = (struct pthread_attr *) attr;
-+  const struct pthread_attr *iattr = (struct pthread_attr *) &inject_attr;
++  const char *enable_rand_prio = getenv("PTH_RAND_PRIO");
++  int rand_prio_success = 0;
++  if (enable_rand_prio != NULL && strncmp(enable_rand_prio, "1", 1) == 0)
++  {
++    if (__assign_random_priority(&inject_attr) != 0)
++    {
++      printf("Error assigning random priority to thread\n");
++    }
++    else
++    {
++      rand_prio_success = 1;
++    }
++  }
++  const struct pthread_attr *iattr = rand_prio_success?
++    (struct pthread_attr *) &inject_attr: (struct pthread_attr *) attr;
++
    struct pthread_attr default_attr;
    bool free_cpuset = false;
    bool c11 = (attr == ATTR_C11_THREAD);
