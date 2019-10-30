@@ -22,11 +22,13 @@ SOFTWARE
 
 Website: richiejp.wordpress.com email: richiejp@gmail.com*/
 
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <string.h>
+#include <sched.h>
 
 void* producer(void*);
 void* consumer(void*);
@@ -51,7 +53,7 @@ int main(){
         //context.cond = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
         context.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
         context.error = 0;
-	context.limit = 5000;
+	context.limit = 100000000;
 	context.holder = (long int*)malloc(context.limit*numOfProducer*sizeof(long int));
 	context.index = 0;
          
@@ -66,11 +68,16 @@ int main(){
 	int i;
         for(i=0; i<numOfProducer; i++){
                 int ret;
+                cpu_set_t cpuset;
+                CPU_ZERO(&cpuset);
+                CPU_SET(0, &cpuset);
 		pthread_attr_t attr;
                 pthread_attr_init(&attr);
-                pthread_attr_setschedpolicy(&attr, SCHED_RR);
+                pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
                 pthread_attr_setschedparam(&attr, &param);
+                pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);
                 pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+                //printf("%d\n", sched_rr_get_interval())
 		if((ret = pthread_create(&prod[i], &attr, producer, (void*)&context) != 0)){
 		        printf("Could not create producer thread: %s\n", strerror(ret));
 
@@ -113,7 +120,7 @@ int main(){
         	pthread_join(prod[i], NULL);
         }
 
-	for(i=0; i<context.limit*numOfProducer; i++){
+	for(i=0; i<context.limit*numOfProducer; i+=100){
         	printf("%ld\n", context.holder[i]%1000);
         }
 
