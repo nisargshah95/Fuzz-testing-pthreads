@@ -73,7 +73,7 @@ int main(){
                 CPU_SET(0, &cpuset);
 		pthread_attr_t attr;
                 pthread_attr_init(&attr);
-                pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
+                pthread_attr_setschedpolicy(&attr, SCHED_RR);
                 pthread_attr_setschedparam(&attr, &param);
                 pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);
                 pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
