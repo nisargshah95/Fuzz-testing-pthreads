@@ -18,9 +18,8 @@ with open(sys.argv[1],'r') as file:
         i += 1
 
 plt.plot(x,y,',b')
-plt.xlabel('x')
-plt.ylabel('y')
-plt.title('Interesting Graph\nCheck it out')
-plt.legend()
+plt.xlabel('tid')
+plt.ylabel('Time (s)')
+plt.title('Scheduling Distribution')
 plt.show()
 plt.savefig(sys.argv[1]+'.png')
