@@ -1,5 +1,26 @@
 # Fuzz-testing-pthreads
 
+## Build glibc
+
+Copy libgcc
+
+cp /lib/x86_64-linux-gnu/libgcc_s.so.1 "${DESTDIR}/lib/"
+
+## Run prod-con2 and plot results
+
+Compile
+
+SYSROOT=/fastdisk/glibc-master-install gcc   -L${SYSROOT}/usr/lib64   -I${SYSROOT}/include   --sysroot=${SYSROOT}   -Wl,-rpath=${SYSROOT}/lib64   -Wl,--dynamic-linker=/fastdisk/glibc-master-install/lib64/ld-2.30.9000.so  -pthread -g -o /mnt/hd/prod-con2 /mnt/hd/prod-con2.c
+
+Run
+
+cd <glibc build dir>
+
+sudo CUSTOM_SCHED=1 SCHED_POLICY=1 RAND_PRIO=1 ./testrun.sh /mnt/hd/prod-con2 > /mnt/hd/prod-con2-static-fifo-2-100m.out
+
+Plot
+
+python3 plot.py /mnt/hd/prod-con2-static-rr-2-100m.out
 
 ## Build glibc from ubuntu sources -
 https://packages.ubuntu.com/bionic/glibc-source
