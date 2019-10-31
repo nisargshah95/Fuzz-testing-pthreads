@@ -53,7 +53,7 @@ int main(){
         //context.cond = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
         context.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
         context.error = 0;
-	context.limit = 100000000;
+	context.limit = 10000000;
 	context.holder = (long int*)malloc(context.limit*numOfProducer*sizeof(long int));
 	context.index = 0;
          
@@ -120,7 +120,7 @@ int main(){
         	pthread_join(prod[i], NULL);
         }
 
-	for(i=0; i<context.limit*numOfProducer; i+=100){
+	for(i=0; i<context.limit*numOfProducer; i+=10){
         	printf("%ld\n", context.holder[i]%1000);
         }
 
