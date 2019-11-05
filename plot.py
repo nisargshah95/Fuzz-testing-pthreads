@@ -18,8 +18,8 @@ with open(sys.argv[1],'r') as file:
         i += 1
 
 plt.plot(x,y,',b')
-plt.xlabel('tid')
-plt.ylabel('Time (s)')
+plt.xlabel('Time')
+plt.ylabel('tid')
 plt.title('Scheduling Distribution')
 plt.show()
 plt.savefig(sys.argv[1]+'.png')
