@@ -25,11 +25,11 @@ void *inc_x(void *x_void_ptr)
 	/* increment x to 100 */
 	int **x = (int **)x_void_ptr;
 	pthread_mutex_lock(&lock2);
+	sleep(1);
 	pthread_mutex_lock(&lock1);
 	(**x)++;
 	printf("x increment finished = %d\n", **x);
     pthread_mutex_unlock(&lock1);
-    sleep(1);
     pthread_mutex_unlock(&lock2);
     printf("new thread finished locking\n");
 
