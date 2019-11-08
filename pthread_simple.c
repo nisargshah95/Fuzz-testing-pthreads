@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <stdio.h>
+#include <string.h>
 
 /* this function is run by the second thread */
 void *inc_x(void *x_void_ptr)
@@ -25,7 +26,7 @@ return NULL;
 int main()
 {
 
-int x = 0, y = 0;
+int x = 0, y = 0, ret;
 
 /* show the initial values of x and y */
 printf("x: %d, y: %d\n", x, y);
@@ -34,12 +35,19 @@ printf("x: %d, y: %d\n", x, y);
 pthread_t inc_x_thread;
 
 /* create a second thread which executes inc_x(&x) */
-int ret = pthread_create(&inc_x_thread, NULL, inc_x, &x);
-if(ret != 0) {
-
-fprintf(stderr, "Error creating thread = %d\n", ret);
-return 1;
-
+if(ret = pthread_create(&inc_x_thread, NULL, inc_x, &x) != 0) {
+    fprintf(stderr, "Error creating thread = %s\n", strerror(ret));
+    return 1;
+}
+/* create a second thread which executes inc_x(&x) */
+if(ret = pthread_create(&inc_x_thread, NULL, inc_x, &x) != 0) {
+    fprintf(stderr, "Error creating thread = %s\n", strerror(ret));
+    return 1;
+}
+/* create a second thread which executes inc_x(&x) */
+if(ret = pthread_create(&inc_x_thread, NULL, inc_x, &x) != 0) {
+    fprintf(stderr, "Error creating thread = %s\n", strerror(ret));
+    return 1;
 }
 /* increment y to 100 in the first thread */
 while(++y < 100);
