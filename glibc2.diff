@@ -94,356 +94,76 @@ index 5682c9c2c0..2bf80596f6 100644
    bool free_cpuset = false;
    bool c11 = (attr == ATTR_C11_THREAD);
 diff --git a/nptl/pthread_mutex_lock.c b/nptl/pthread_mutex_lock.c
-index 05bba50666..fdcb97f6f7 100644
+index 05bba50666..e01bfad921 100644
 --- a/nptl/pthread_mutex_lock.c
 +++ b/nptl/pthread_mutex_lock.c
-@@ -26,6 +26,9 @@
+@@ -26,6 +26,7 @@
  #include <atomic.h>
  #include <futex-internal.h>
  #include <stap-probe.h>
-+#include <string.h>
-+#include <stdio.h>
-+#include <time.h>
++#include <yield.h>
  
  #ifndef lll_lock_elision
  #define lll_lock_elision(lock, try_lock, private)	({ \
-@@ -64,6 +67,85 @@ __pthread_mutex_lock (pthread_mutex_t *mutex)
+@@ -64,6 +65,9 @@ __pthread_mutex_lock (pthread_mutex_t *mutex)
  {
    /* See concurrency notes regarding mutex type which is loaded from __kind
       in struct __pthread_mutex_s in sysdeps/nptl/bits/thread-shared-types.h.  */
-+//  int pthread_ret = 0;
-+ 
-+//  bool dbg = false;
-+/*  const char *dbgS = getenv("DBG");
-+  if(dbgS != NULL && strncmp(dbgS, "1", 1)==0)
-+    dbg = true;
-+*/
-+  //srandom(time(NULL));
-+  const char *start_yield = getenv("RAND_YIELD");
-+  if(start_yield != NULL && strncmp(start_yield, "1", 1)==0)
-+  {
-+   if(random()%2 ==0)
-+   { 
 +
-+  /*    struct sched_param originalParam = {0};
-+      int originalPolicy = 0;
-+      if((pthread_ret = pthread_getschedparam(pthread_self(), &originalPolicy, &originalParam)) !=0 )
-+      {
-+        printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+      }
++  yield();
 +
-+
-+      if(dbg)
-+      {
-+        struct sched_param tempParam={0};
-+        int tempPolicy=0;
-+        if((pthread_ret = pthread_getschedparam(pthread_self(), &tempPolicy, &tempParam)) !=0 )
-+        {
-+          printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+        }
-+	else
-+	{
-+	  printf("Priority and policy original yielding: %d and %d\n", tempParam.sched_priority, tempPolicy);
-+	}
-+      }
-+*/
-+/*      const struct sched_param param = {0};
-+      if((pthread_ret = pthread_setschedparam(pthread_self(), SCHED_OTHER, &param)) != 0)
-+      {
-+        printf("Error calling pthread_setschedparam: %s\n", strerror(pthread_ret));
-+      }
-+ */   
-+  /*    if(dbg)
-+      {
-+        struct sched_param tempParam={0};
-+        int tempPolicy=0;
-+        if((pthread_ret = pthread_getschedparam(pthread_self(), &tempPolicy, &tempParam)) !=0 )
-+        {
-+          printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+        }
-+	else
-+	{
-+	  printf("Priority and policy while yielding: %d and %d\n", tempParam.sched_priority, tempPolicy);
-+	}
-+      }    
-+*/
-+      pthread_yield();
-+     
-+    /*  if((pthread_ret = pthread_setschedparam(pthread_self(), originalPolicy, &originalParam)) != 0)
-+      {
-+        printf("Error calling pthread_setschedparam: %s\n", strerror(pthread_ret));
-+      }
-+
-+      if(dbg)
-+      {
-+        struct sched_param tempParam={0};
-+        int tempPolicy=0;
-+        if((pthread_ret = pthread_getschedparam(pthread_self(), &tempPolicy, &tempParam)) !=0 )
-+        {
-+          printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+        }
-+	else
-+	{
-+	  printf("Priority and policy after yielding: %d and %d\n", tempParam.sched_priority, tempPolicy);
-+	}
-+      }*/
-+    } 
-+  }
-+	      
    unsigned int type = PTHREAD_MUTEX_TYPE_ELISION (mutex);
  
    LIBC_PROBE (mutex_entry, 1, mutex);
-@@ -162,6 +244,74 @@ __pthread_mutex_lock (pthread_mutex_t *mutex)
- #endif
+@@ -163,6 +167,8 @@ __pthread_mutex_lock (pthread_mutex_t *mutex)
  
    LIBC_PROBE (mutex_acquired, 1, mutex);
-+   
-+  if(start_yield != NULL && strncmp(start_yield, "1", 1)==0)
-+  {
-+   if(random()%2 ==0)
-+   {
-+ /*     struct sched_param originalParam;
-+      int originalPolicy;
-+      if((pthread_ret = pthread_getschedparam(pthread_self(), &originalPolicy, &originalParam)) !=0 )
-+      {
-+        printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+      }
-+
-+      if(dbg)
-+      {
-+        struct sched_param tempParam = {0};
-+        int tempPolicy = 0;
-+        if((pthread_ret = pthread_getschedparam(pthread_self(), &tempPolicy, &tempParam)) !=0 )
-+        {
-+          printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+        }
-+	else
-+	{
-+	  printf("Priority and policy original yielding:  and \n");
-+	}
-+      }
-+      
-+      const struct sched_param param = {0};
-+      if((pthread_ret = pthread_setschedparam(pthread_self(), SCHED_OTHER, &param)) != 0)
-+      {
-+        printf("Error calling pthread_setschedparam: %s\n", strerror(pthread_ret));
-+      }
-+    
-+      if(dbg)
-+      {
-+        struct sched_param tempParam;
-+        int tempPolicy;
-+        if((pthread_ret = pthread_getschedparam(pthread_self(), &tempPolicy, &tempParam)) !=0 )
-+        {
-+          printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+        }
-+	else
-+	{
-+	  printf("Priority and policy while yielding:  and \n");
-+	}
-+      }    
-+*/
-+      pthread_yield();
-+     
-+/*      if((pthread_ret = pthread_setschedparam(pthread_self(), originalPolicy, &originalParam)) != 0)
-+      {
-+        printf("Error calling pthread_setschedparam: %s\n", strerror(pthread_ret));
-+      }
-+
-+      if(dbg)
-+      {
-+        struct sched_param tempParam;
-+        int tempPolicy;
-+        if((pthread_ret = pthread_getschedparam(pthread_self(), &tempPolicy, &tempParam)) !=0 )
-+        {
-+          printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+        }
-+	else
-+	{
-+	  printf("Priority and policy after yielding:  and \n");
-+	}
-+      }*/
-+    } 
-+  }
  
++  yield();
++
    return 0;
  }
+ 
 diff --git a/nptl/pthread_mutex_unlock.c b/nptl/pthread_mutex_unlock.c
-index 53f8b868e4..80d95410fa 100644
+index 53f8b868e4..898505dec7 100644
 --- a/nptl/pthread_mutex_unlock.c
 +++ b/nptl/pthread_mutex_unlock.c
-@@ -23,6 +23,9 @@
+@@ -23,6 +23,7 @@
  #include <lowlevellock.h>
  #include <stap-probe.h>
  #include <futex-internal.h>
-+#include <string.h>
-+#include <stdio.h>
-+#include <time.h>
++#include <yield.h>
  
  #ifndef lll_unlock_elision
  #define lll_unlock_elision(a,b,c) ({ lll_unlock (a,c); 0; })
-@@ -38,6 +41,86 @@ __pthread_mutex_unlock_usercnt (pthread_mutex_t *mutex, int decr)
+@@ -38,6 +39,9 @@ __pthread_mutex_unlock_usercnt (pthread_mutex_t *mutex, int decr)
  {
    /* See concurrency notes regarding mutex type which is loaded from __kind
       in struct __pthread_mutex_s in sysdeps/nptl/bits/thread-shared-types.h.  */
 +
-+/*  int pthread_ret = 0;
-+  
-+  bool dbg = false;
-+  const char *dbgS = getenv("DBG");
-+  if(dbgS != NULL && strncmp(dbgS, "1", 1)==0)
-+    dbg = true;
++  yield();
 +
-+  srandom(time(NULL));
-+*/
-+  const char *start_yield = getenv("RAND_YIELD");
-+  if(start_yield != NULL && strncmp(start_yield, "1", 1)==0)
-+  {
-+   if(random()%2 ==0)
-+   { 
-+     /* struct sched_param originalParam;
-+      int originalPolicy;
-+      if((pthread_ret = pthread_getschedparam(pthread_self(), &originalPolicy, &originalParam)) !=0 )
-+      {
-+        printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+      }
-+
-+      if(dbg)
-+      {
-+        struct sched_param tempParam;
-+        int tempPolicy;
-+        if((pthread_ret = pthread_getschedparam(pthread_self(), &tempPolicy, &tempParam)) !=0 )
-+        {
-+          printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+        }
-+	else
-+	{
-+	  printf("Priority and policy original yielding: %d and %d\n", tempParam.sched_priority, tempPolicy);
-+	}
-+      }
-+      
-+      const struct sched_param param = {0};
-+      if((pthread_ret = pthread_setschedparam(pthread_self(), SCHED_OTHER, &param)) != 0)
-+      {
-+        printf("Error calling pthread_setschedparam: %s\n", strerror(pthread_ret));
-+      }
-+    
-+      if(dbg)
-+      {
-+        struct sched_param tempParam;
-+        int tempPolicy;
-+        if((pthread_ret = pthread_getschedparam(pthread_self(), &tempPolicy, &tempParam)) !=0 )
-+        {
-+          printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+        }
-+	else
-+	{
-+	  printf("Priority and policy while yielding: %d and %d\n", tempParam.sched_priority, tempPolicy);
-+	}
-+      }*/    
-+
-+      pthread_yield();
-+     
-+     /* if((pthread_ret = pthread_setschedparam(pthread_self(), originalPolicy, &originalParam)) != 0)
-+      {
-+        printf("Error calling pthread_setschedparam: %s\n", strerror(pthread_ret));
-+      }
-+
-+      if(dbg)
-+      {
-+        struct sched_param tempParam;
-+        int tempPolicy;
-+        if((pthread_ret = pthread_getschedparam(pthread_self(), &tempPolicy, &tempParam)) !=0 )
-+        {
-+          printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+        }
-+	else
-+	{
-+	  printf("Priority and policy after yielding: %d and %d\n", tempParam.sched_priority, tempPolicy);
-+	}
-+      }*/
-+    } 
-+  }
-+
-+      
    int type = PTHREAD_MUTEX_TYPE_ELISION (mutex);
    if (__builtin_expect (type
  			& ~(PTHREAD_MUTEX_KIND_MASK_NP
-@@ -91,6 +174,76 @@ __pthread_mutex_unlock_usercnt (pthread_mutex_t *mutex, int decr)
- 	return EPERM;
-       goto normal;
-     }
+diff --git a/nptl/yield.h b/nptl/yield.h
+new file mode 100644
+index 0000000000..d876b64ce5
+--- /dev/null
++++ b/nptl/yield.h
+@@ -0,0 +1,15 @@
++#include<time.h>
 +
-+  if(start_yield != NULL && strncmp(start_yield, "1", 1)==0)
++static inline void yield(void){
++
++const char* start_yield = getenv("RAND_YIELD");
++
++if(start_yield != NULL && strncmp(start_yield, "1", 1)==0)
 +  {
 +   if(random()%2 ==0)
-+   { 
-+    /*  struct sched_param originalParam;
-+      int originalPolicy;
-+      if((pthread_ret = pthread_getschedparam(pthread_self(), &originalPolicy, &originalParam)) !=0 )
-+      {
-+        printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+      }
++   {
 +
-+      if(dbg)
-+      {
-+        struct sched_param tempParam;
-+        int tempPolicy;
-+        if((pthread_ret = pthread_getschedparam(pthread_self(), &tempPolicy, &tempParam)) !=0 )
-+        {
-+          printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+        }
-+	else
-+	{
-+	  printf("Priority and policy original yielding: %d and %d\n", tempParam.sched_priority, tempPolicy);
-+	}
-+      }
-+      
-+      const struct sched_param param = {0};
-+      if((pthread_ret = pthread_setschedparam(pthread_self(), SCHED_OTHER, &param)) != 0)
-+      {
-+        printf("Error calling pthread_setschedparam: %s\n", strerror(pthread_ret));
-+      }
-+    
-+      if(dbg)
-+      {
-+        struct sched_param tempParam;
-+        int tempPolicy;
-+        if((pthread_ret = pthread_getschedparam(pthread_self(), &tempPolicy, &tempParam)) !=0 )
-+        {
-+          printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+        }
-+	else
-+	{
-+	  printf("Priority and policy while yielding: %d and %d\n", tempParam.sched_priority, tempPolicy);
-+	}
-+      } */   
-+
-+      pthread_yield();
-+     
-+      /*if((pthread_ret = pthread_setschedparam(pthread_self(), originalPolicy, &originalParam)) != 0)
-+      {
-+        printf("Error calling pthread_setschedparam: %s\n", strerror(pthread_ret));
-+      }
-+
-+      if(dbg)
-+      {
-+        struct sched_param tempParam;
-+        int tempPolicy;
-+        if((pthread_ret = pthread_getschedparam(pthread_self(), &tempPolicy, &tempParam)) !=0 )
-+        {
-+          printf("Error calling pthread_getschedparam: %s\n", strerror(pthread_ret));
-+        }
-+	else
-+	{
-+	  printf("Priority and policy after yielding: %d and %d\n", tempParam.sched_priority, tempPolicy);
-+	}
-+      }*/
-+    } 
++	   pthread_yield();
++   }
 +  }
-+
-+
- }
- 
- 
-
++}
