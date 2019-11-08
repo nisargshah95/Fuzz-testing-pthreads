@@ -1,3 +1,4 @@
+#define _GNU_SOURCE             /* See feature_test_macros(7) */
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +26,8 @@ void *inc_x(void *x_void_ptr)
 	/* increment x to 100 */
 	int **x = (int **)x_void_ptr;
 	pthread_mutex_lock(&lock2);
-	sleep(1);
+	// sleep(1);
+	// pthread_yield();
 	pthread_mutex_lock(&lock1);
 	(**x)++;
 	printf("x increment finished = %d\n", **x);
@@ -57,7 +59,10 @@ int main()
 	// sleep(1);
 
 	pthread_mutex_lock(&lock1);
-	sleep(1);
+	// sleep(1);
+	int i;
+	for (i=0; i < 100; i++)
+		pthread_yield();
 	pthread_mutex_lock(&lock2);
 	(*x)++;
 	printf("x increment finished = %d\n", *x);

@@ -8,6 +8,12 @@
 void *inc_x(void *x_void_ptr)
 {
 	// sleep(1);
+
+	/* increment x to 100 */
+	int **x = (int **)x_void_ptr;
+	(**x)++;
+	printf("x increment finished = %d\n", **x);
+
 	struct sched_param schedparam;
 	int policy;
 	int ret = pthread_getschedparam(pthread_self(), &policy, &schedparam);
@@ -15,11 +21,6 @@ void *inc_x(void *x_void_ptr)
 		printf("error fetching schedparams\n");
 	}
 	printf("thread created with policy = %d and priority = %d\n", policy, schedparam.sched_priority);
-
-	/* increment x to 100 */
-	int **x = (int **)x_void_ptr;
-	(**x)++;
-	printf("x increment finished = %d\n", **x);
 
 	/* the function must return something - NULL will do */
 	return NULL;
