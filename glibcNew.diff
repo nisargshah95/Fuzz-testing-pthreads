@@ -1,5 +1,5 @@
 diff --git a/nptl/pthread_cond_broadcast.c b/nptl/pthread_cond_broadcast.c
-index e9846328d9..8a33c75d10 100644
+index 053bedb169..40880022f7 100644
 --- a/nptl/pthread_cond_broadcast.c
 +++ b/nptl/pthread_cond_broadcast.c
 @@ -24,7 +24,7 @@
@@ -21,7 +21,7 @@ index e9846328d9..8a33c75d10 100644
  
    unsigned int wrefs = atomic_load_relaxed (&cond->__data.__wrefs);
 diff --git a/nptl/pthread_cond_destroy.c b/nptl/pthread_cond_destroy.c
-index 46807c3516..69f1548f64 100644
+index 0ecc4dcf39..513c459e51 100644
 --- a/nptl/pthread_cond_destroy.c
 +++ b/nptl/pthread_cond_destroy.c
 @@ -24,7 +24,7 @@
@@ -42,7 +42,7 @@ index 46807c3516..69f1548f64 100644
  
    /* Set the wake request flag.  We could also spin, but destruction that is
 diff --git a/nptl/pthread_cond_init.c b/nptl/pthread_cond_init.c
-index 1652b360a5..7992520b0a 100644
+index 972fc48e90..128473812b 100644
 --- a/nptl/pthread_cond_init.c
 +++ b/nptl/pthread_cond_init.c
 @@ -20,12 +20,13 @@
@@ -61,7 +61,7 @@ index 1652b360a5..7992520b0a 100644
  
    struct pthread_condattr *icond_attr = (struct pthread_condattr *) cond_attr;
 diff --git a/nptl/pthread_cond_signal.c b/nptl/pthread_cond_signal.c
-index ea416a0e2c..fe1d6442f1 100644
+index dec839833e..d8ba515c46 100644
 --- a/nptl/pthread_cond_signal.c
 +++ b/nptl/pthread_cond_signal.c
 @@ -27,6 +27,7 @@
@@ -82,7 +82,7 @@ index ea416a0e2c..fe1d6442f1 100644
  
    /* First check whether there are waiters.  Relaxed MO is fine for that for
 diff --git a/nptl/pthread_cond_wait.c b/nptl/pthread_cond_wait.c
-index cf372bc017..92d6315491 100644
+index 450bf66b34..a807a8512b 100644
 --- a/nptl/pthread_cond_wait.c
 +++ b/nptl/pthread_cond_wait.c
 @@ -30,7 +30,7 @@
@@ -103,7 +103,7 @@ index cf372bc017..92d6315491 100644
  }
  
 diff --git a/nptl/pthread_create.c b/nptl/pthread_create.c
-index 5682c9c2c0..2bf80596f6 100644
+index 18b7bbe765..ddb4499005 100644
 --- a/nptl/pthread_create.c
 +++ b/nptl/pthread_create.c
 @@ -20,8 +20,11 @@
@@ -118,7 +118,7 @@ index 5682c9c2c0..2bf80596f6 100644
  #include "pthreadP.h"
  #include <hp-timing.h>
  #include <ldsodefs.h>
-@@ -619,13 +622,77 @@ report_thread_creation (struct pthread *pd)
+@@ -621,13 +624,77 @@ report_thread_creation (struct pthread *pd)
  }
  
  
@@ -198,12 +198,12 @@ index 5682c9c2c0..2bf80596f6 100644
    bool free_cpuset = false;
    bool c11 = (attr == ATTR_C11_THREAD);
 diff --git a/nptl/pthread_mutex_lock.c b/nptl/pthread_mutex_lock.c
-index 05bba50666..ce436221c0 100644
+index 2673a3576f..a6dc915bf4 100644
 --- a/nptl/pthread_mutex_lock.c
 +++ b/nptl/pthread_mutex_lock.c
 @@ -26,6 +26,7 @@
  #include <atomic.h>
- #include <futex-internal.h>
+ #include <lowlevellock.h>
  #include <stap-probe.h>
 +#include <yield.h>
  
@@ -220,18 +220,18 @@ index 05bba50666..ce436221c0 100644
  
    LIBC_PROBE (mutex_entry, 1, mutex);
 diff --git a/nptl/pthread_mutex_unlock.c b/nptl/pthread_mutex_unlock.c
-index 53f8b868e4..898505dec7 100644
+index baaa10667c..82bc386066 100644
 --- a/nptl/pthread_mutex_unlock.c
 +++ b/nptl/pthread_mutex_unlock.c
-@@ -23,6 +23,7 @@
+@@ -22,6 +22,7 @@
+ #include "pthreadP.h"
  #include <lowlevellock.h>
  #include <stap-probe.h>
- #include <futex-internal.h>
 +#include <yield.h>
  
  #ifndef lll_unlock_elision
  #define lll_unlock_elision(a,b,c) ({ lll_unlock (a,c); 0; })
-@@ -38,6 +39,9 @@ __pthread_mutex_unlock_usercnt (pthread_mutex_t *mutex, int decr)
+@@ -37,6 +38,9 @@ __pthread_mutex_unlock_usercnt (pthread_mutex_t *mutex, int decr)
  {
    /* See concurrency notes regarding mutex type which is loaded from __kind
       in struct __pthread_mutex_s in sysdeps/nptl/bits/thread-shared-types.h.  */
@@ -243,17 +243,28 @@ index 53f8b868e4..898505dec7 100644
  			& ~(PTHREAD_MUTEX_KIND_MASK_NP
 diff --git a/nptl/yield.h b/nptl/yield.h
 new file mode 100644
-index 0000000000..e3b2c684e8
+index 0000000000..a3e5203d43
 --- /dev/null
 +++ b/nptl/yield.h
-@@ -0,0 +1,16 @@
+@@ -0,0 +1,27 @@
 +#include<time.h>
++#include<limits.h>
 +
 +static inline void yield(void){
 +
-+const char* start_yield = getenv("RAND_YIELD");
++  const char* start_yield = getenv("RAND_YIELD");
 +
-+if(start_yield != NULL && strncmp(start_yield, "1", 1)==0)
++  unsigned cycles_high, cycles_low;
++
++  asm volatile ("RDTSCP\n\t"
++    "mov %%edx, %0\n\t"
++    "mov %%eax, %1\n\t"
++    "CPUID\n\t": "=r" (cycles_high), "=r" (cycles_low)::
++    "%rax", "%rbx", "%rcx", "%rdx");
++  // configure priority (default: static value 90)
++  srandom((int)(cycles_low % INT_MAX));
++
++  if(start_yield != NULL && strncmp(start_yield, "1", 1)==0)
 +  {
 +   if(random()%2 ==0)
 +   {
