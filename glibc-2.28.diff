@@ -1,0 +1,219 @@
+diff --git a/nptl/pthread_cond_broadcast.c b/nptl/pthread_cond_broadcast.c
+index e6bcb9b61b..40686c4acf 100644
+--- a/nptl/pthread_cond_broadcast.c
++++ b/nptl/pthread_cond_broadcast.c
+@@ -26,6 +26,7 @@
+ #include <atomic.h>
+ 
+ #include <shlib-compat.h>
++#include <yield.h>
+ 
+ #include "pthread_cond_common.c"
+ 
+@@ -38,6 +39,8 @@
+ int
+ __pthread_cond_broadcast (pthread_cond_t *cond)
+ {
++  yield();
++
+   LIBC_PROBE (cond_broadcast, 1, cond);
+ 
+   unsigned int wrefs = atomic_load_relaxed (&cond->__data.__wrefs);
+diff --git a/nptl/pthread_cond_destroy.c b/nptl/pthread_cond_destroy.c
+index 14bb8f26d8..227d3b2b7c 100644
+--- a/nptl/pthread_cond_destroy.c
++++ b/nptl/pthread_cond_destroy.c
+@@ -22,6 +22,7 @@
+ #include <stap-probe.h>
+ #include <atomic.h>
+ #include <futex-internal.h>
++#include <yield.h>
+ 
+ #include "pthread_cond_common.c"
+ 
+@@ -41,6 +42,7 @@
+ int
+ __pthread_cond_destroy (pthread_cond_t *cond)
+ {
++  yield();
+   LIBC_PROBE (cond_destroy, 1, cond);
+ 
+   /* Set the wake request flag.  We could also spin, but destruction that is
+diff --git a/nptl/pthread_cond_init.c b/nptl/pthread_cond_init.c
+index d193d0ec32..7fa1020234 100644
+--- a/nptl/pthread_cond_init.c
++++ b/nptl/pthread_cond_init.c
+@@ -21,11 +21,14 @@
+ #include <stap-probe.h>
+ #include <string.h>
+ 
++#include <yield.h>
+ 
+ /* See __pthread_cond_wait for details.  */
+ int
+ __pthread_cond_init (pthread_cond_t *cond, const pthread_condattr_t *cond_attr)
+ {
++  yield();
++
+   ASSERT_TYPE_SIZE (pthread_cond_t, __SIZEOF_PTHREAD_COND_T);
+ 
+   struct pthread_condattr *icond_attr = (struct pthread_condattr *) cond_attr;
+diff --git a/nptl/pthread_cond_signal.c b/nptl/pthread_cond_signal.c
+index 3db3d1fbeb..ce47b6a326 100644
+--- a/nptl/pthread_cond_signal.c
++++ b/nptl/pthread_cond_signal.c
+@@ -27,6 +27,7 @@
+ 
+ #include <shlib-compat.h>
+ #include <stap-probe.h>
++#include <yield.h>
+ 
+ #include "pthread_cond_common.c"
+ 
+@@ -34,6 +35,8 @@
+ int
+ __pthread_cond_signal (pthread_cond_t *cond)
+ {
++  yield();
++
+   LIBC_PROBE (cond_signal, 1, cond);
+ 
+   /* First check whether there are waiters.  Relaxed MO is fine for that for
+diff --git a/nptl/pthread_cond_wait.c b/nptl/pthread_cond_wait.c
+index ebf07ca82d..935ea9f2a8 100644
+--- a/nptl/pthread_cond_wait.c
++++ b/nptl/pthread_cond_wait.c
+@@ -31,6 +31,7 @@
+ #include <stap-probe.h>
+ #include <time.h>
+ 
++#include <yield.h>
+ #include "pthread_cond_common.c"
+ 
+ 
+@@ -652,6 +653,7 @@ __pthread_cond_wait_common (pthread_cond_t *cond, pthread_mutex_t *mutex,
+ int
+ __pthread_cond_wait (pthread_cond_t *cond, pthread_mutex_t *mutex)
+ {
++  yield();
+   return __pthread_cond_wait_common (cond, mutex, NULL);
+ }
+ 
+diff --git a/nptl/pthread_create.c b/nptl/pthread_create.c
+index fe75d04113..ab7898153d 100644
+--- a/nptl/pthread_create.c
++++ b/nptl/pthread_create.c
+@@ -34,6 +34,8 @@
+ #include <futex-internal.h>
+ #include <tls-setup.h>
+ #include "libioP.h"
++#include <time.h>
++#include <limits.h>
+ 
+ #include <shlib-compat.h>
+ 
+@@ -627,6 +629,37 @@ report_thread_creation (struct pthread *pd)
+   return false;
+ }
+ 
++int __custom_scheduling (pthread_attr_t *attr)
++{
++  int pthread_ret = 0;
++  unsigned cycles_high, cycles_low;
++
++  asm volatile ("RDTSCP\n\t"
++    "mov %%edx, %0\n\t"
++    "mov %%eax, %1\n\t"
++    "CPUID\n\t": "=r" (cycles_high), "=r" (cycles_low)::
++    "%rax", "%rbx", "%rcx", "%rdx");
++  // configure priority (default: static value 90)
++  srandom((int)(cycles_low % INT_MAX));
++  const char *rand_prio = getenv("RAND_PRIO");
++  int prio = (rand_prio != NULL && atoi(rand_prio) == 1)? random()%100: 90;
++  const struct sched_param param = { prio };
++
++  // configure sched policy (default: SCHED_FIFO)
++  const char *sched_policy_str = getenv("SCHED_POLICY");
++  int sched_policy = (sched_policy_str == NULL)? SCHED_FIFO: atoi(sched_policy_str);
++
++  cpu_set_t cpuset;
++  CPU_ZERO(&cpuset);
++  CPU_SET(19, &cpuset);
++
++  if ((pthread_ret = pthread_attr_init(attr)) != 0);
++  else if ((pthread_ret = pthread_attr_setschedpolicy(attr, sched_policy)) != 0);
++  else if ((pthread_ret = pthread_attr_setschedparam(attr, &param)) != 0);
++  else if ((pthread_ret = pthread_attr_setinheritsched(attr, PTHREAD_EXPLICIT_SCHED)) != 0);
++  else if ((pthread_ret = pthread_attr_setaffinity_np(attr, sizeof(cpu_set_t), &cpuset)) != 0);
++  return pthread_ret;
++}
+ 
+ int
+ __pthread_create_2_1 (pthread_t *newthread, const pthread_attr_t *attr,
+@@ -634,7 +667,24 @@ __pthread_create_2_1 (pthread_t *newthread, const pthread_attr_t *attr,
+ {
+   STACK_VARIABLES;
+ 
+-  const struct pthread_attr *iattr = (struct pthread_attr *) attr;
++  pthread_attr_t inject_attr;
++
++  const char *enable_custom_sched = getenv("CUSTOM_SCHED");
++  int custom_sched_success = 0;
++  if (enable_custom_sched != NULL && strncmp(enable_custom_sched, "1", 1) == 0)
++  {
++    if (__custom_scheduling(&inject_attr) != 0)
++    {
++      printf("Error assigning random priority to thread\n");
++    }
++    else
++    {
++      custom_sched_success = 1;
++    }
++  }
++  const struct pthread_attr *iattr = custom_sched_success?
++    (struct pthread_attr *) &inject_attr: (struct pthread_attr *) attr;
++
+   struct pthread_attr default_attr;
+   bool free_cpuset = false;
+   bool c11 = (attr == ATTR_C11_THREAD);
+diff --git a/nptl/pthread_mutex_lock.c b/nptl/pthread_mutex_lock.c
+index 29cc143e6c..2125c0f6c8 100644
+--- a/nptl/pthread_mutex_lock.c
++++ b/nptl/pthread_mutex_lock.c
+@@ -26,6 +26,7 @@
+ #include <atomic.h>
+ #include <lowlevellock.h>
+ #include <stap-probe.h>
++#include <yield.h>
+ 
+ #ifndef lll_lock_elision
+ #define lll_lock_elision(lock, try_lock, private)	({ \
+@@ -62,6 +63,8 @@ static int __pthread_mutex_lock_full (pthread_mutex_t *mutex)
+ int
+ __pthread_mutex_lock (pthread_mutex_t *mutex)
+ {
++  yield();
++
+   /* See concurrency notes regarding mutex type which is loaded from __kind
+      in struct __pthread_mutex_s in sysdeps/nptl/bits/thread-shared-types.h.  */
+   unsigned int type = PTHREAD_MUTEX_TYPE_ELISION (mutex);
+diff --git a/nptl/pthread_mutex_unlock.c b/nptl/pthread_mutex_unlock.c
+index 68d04d5395..aad3430175 100644
+--- a/nptl/pthread_mutex_unlock.c
++++ b/nptl/pthread_mutex_unlock.c
+@@ -22,6 +22,7 @@
+ #include "pthreadP.h"
+ #include <lowlevellock.h>
+ #include <stap-probe.h>
++#include <yield.h>
+ 
+ #ifndef lll_unlock_elision
+ #define lll_unlock_elision(a,b,c) ({ lll_unlock (a,c); 0; })
+@@ -35,6 +36,7 @@ int
+ attribute_hidden
+ __pthread_mutex_unlock_usercnt (pthread_mutex_t *mutex, int decr)
+ {
++  yield();
+   /* See concurrency notes regarding mutex type which is loaded from __kind
+      in struct __pthread_mutex_s in sysdeps/nptl/bits/thread-shared-types.h.  */
+   int type = PTHREAD_MUTEX_TYPE_ELISION (mutex);
