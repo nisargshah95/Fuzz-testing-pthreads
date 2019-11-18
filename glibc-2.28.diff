@@ -100,7 +100,7 @@ index ebf07ca82d..935ea9f2a8 100644
  }
  
 diff --git a/nptl/pthread_create.c b/nptl/pthread_create.c
-index fe75d04113..ab7898153d 100644
+index fe75d04113..7c7ad83516 100644
 --- a/nptl/pthread_create.c
 +++ b/nptl/pthread_create.c
 @@ -34,6 +34,8 @@
@@ -150,7 +150,7 @@ index fe75d04113..ab7898153d 100644
  
  int
  __pthread_create_2_1 (pthread_t *newthread, const pthread_attr_t *attr,
-@@ -634,7 +667,24 @@ __pthread_create_2_1 (pthread_t *newthread, const pthread_attr_t *attr,
+@@ -634,7 +667,25 @@ __pthread_create_2_1 (pthread_t *newthread, const pthread_attr_t *attr,
  {
    STACK_VARIABLES;
  
@@ -158,12 +158,13 @@ index fe75d04113..ab7898153d 100644
 +  pthread_attr_t inject_attr;
 +
 +  const char *enable_custom_sched = getenv("CUSTOM_SCHED");
-+  int custom_sched_success = 0;
++  int custom_sched_ret = 0, custom_sched_success = 0;
 +  if (enable_custom_sched != NULL && strncmp(enable_custom_sched, "1", 1) == 0)
 +  {
-+    if (__custom_scheduling(&inject_attr) != 0)
++    if ((custom_sched_ret = __custom_scheduling(&inject_attr) != 0))
 +    {
-+      printf("Error assigning random priority to thread\n");
++//      printf("Error assigning random priority to thread\n");
++      return custom_sched_ret;
 +    }
 +    else
 +    {
