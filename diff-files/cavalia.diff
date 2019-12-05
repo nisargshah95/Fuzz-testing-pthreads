@@ -1,0 +1,22 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index eaea1a5..169328c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,7 +1,7 @@
+ SET (CMAKE_C_COMPILER "gcc")
+ SET (CMAKE_CXX_COMPILER "g++")
+ PROJECT (Cavalia)
+-SET (CMAKE_CXX_FLAGS "-std=c++11 -Wno-deprecated-declarations -DOCC" CACHE INTERNAL "compiler options" FORCE)
++SET (CMAKE_CXX_FLAGS "-std=c++11 -Wno-deprecated-declarations -DOCC -DPTHREAD_LOCK" CACHE INTERNAL "compiler options" FORCE)
+ SET (CMAKE_CXX_FLAGS_DEBUG "-O0 -g" CACHE INTERNAL "compiler options" FORCE)
+ SET (CMAKE_CXX_FLAGS_RELEASE "-O3" CACHE INTERNAL "compiler options" FORCE)
+ IF (NOT CMAKE_BUILD_TYPE)
+@@ -13,7 +13,7 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.8)
+ INCLUDE_DIRECTORIES (${PROJECT_SOURCE_DIR}/Common)
+ INCLUDE_DIRECTORIES (${PROJECT_SOURCE_DIR}/Database)
+ 
+-LINK_DIRECTORIES (${PROJECT_SOURCE_DIR}/build/Database)
++LINK_DIRECTORIES (${PROJECT_SOURCE_DIR}/build/Database /fastdisk/cityhash-install/lib/)
+ ADD_SUBDIRECTORY (Database)
+ ADD_SUBDIRECTORY (TpccBenchmark)
+ ADD_SUBDIRECTORY (MicroBenchmark)

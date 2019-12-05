@@ -1,0 +1,187 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f66a51a6..1b060962 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -15,6 +15,8 @@
+ # specific language governing permissions and limitations
+ # under the License.
+ 
++set(CMAKE_VERBOSE_MAKEFILE on)
++
+ cmake_minimum_required (VERSION 3.0)
+ project (QUICKSTEP)
+ 
+@@ -25,6 +27,13 @@ include(CheckCXXCompilerFlag)
+ include(CheckCXXSourceCompiles)
+ include(QsProtobufGenerateCpp)
+ 
++set(SYSROOT /fastdisk/glibc-master-install)
++#target_compile_options(quickstep_cli_shell BEFORE PUBLIC "-L${SYSROOT}/usr/lib64" "--sysroot=${SYSROOT}" "-Wl,-rpath=${SYSROOT}/lib64" "-Wl,--dynamic-linker=${SYSROOT}/lib64/ld-2.30.so")
++#add_compile_options("-L${SYSROOT}/usr/lib64" "--sysroot=${SYSROOT}" "-Wl,-rpath=${SYSROOT}/lib64" "-Wl,--dynamic-linker=${SYSROOT}/lib64/ld-2.30.so")
++#target_include_directories(quickstep_cli_shell BEFORE PUBLIC "${SYSROOT}/include")
++#include_directories(BEFORE "${SYSROOT}/include")
++set(CMAKE_EXE_LINKER_FLAGS "-L${SYSROOT}/usr/lib64 -I${SYSROOT}/include --sysroot=${SYSROOT} -Wl,-rpath=${SYSROOT}/lib64 -Wl,--dynamic-linker=${SYSROOT}/lib64/ld-2.28.so")
++
+ if(NOT CMAKE_BUILD_TYPE)
+   set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
+       "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+@@ -305,7 +314,7 @@ else()
+   # Treat warnings as errors, 'cause we hardcore.
+   CHECK_CXX_COMPILER_FLAG("-Werror" COMPILER_HAS_WERROR)
+   if (COMPILER_HAS_WERROR)
+-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
++	  #  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+   endif()
+ 
+   # Clang reports such warning when using Protoc 3.0 beta.
+@@ -599,7 +608,7 @@ if(USE_TCMALLOC)
+   CHECK_CXX_COMPILER_FLAG("-Wno-return-type-c-linkage"
+                           COMPILER_HAS_WNO_RETURN_TYPE_C_LINKAGE)
+   if (COMPILER_HAS_WNO_RETURN_TYPE_C_LINKAGE)
+-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-return-type-c-linkage")
++	  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-return-type-c-linkage")
+   endif()
+   include_directories(${CMAKE_CURRENT_BINARY_DIR}/third_party)
+ endif()
+@@ -829,3 +838,7 @@ if (ENABLE_NETWORK_CLI)
+                         quickstep_cli_NetworkCliClient
+                         quickstep_cli_NetworkIO)
+ endif()
++
++message("Custom changes")
++get_target_property(COPTIONS quickstep_cli_shell COMPILE_OPTIONS)
++message("sysroot = ${SYSROOT} compile options: ${COPTIONS} Linker options: ${CMAKE_EXE_LINKER_FLAGS}")
+diff --git a/threading/CMakeLists.txt b/threading/CMakeLists.txt
+index fb8b4d4e..f017e467 100644
+--- a/threading/CMakeLists.txt
++++ b/threading/CMakeLists.txt
+@@ -20,8 +20,9 @@ include(CheckCXXSourceCompiles)
+ 
+ # Find a threading library we can use.
+ set(FOUND_THREADS FALSE)
++set(QUICKSTEP_HAVE_CPP11_THREADS FALSE)
+ 
+-if(NOT FOUND_THREADS)
++if(FOUND_THREADS)
+   CHECK_CXX_SOURCE_COMPILES("
+ #include <thread>
+ #include <mutex>
+@@ -116,8 +117,9 @@ endif()
+ 
+ # Try to find some yield function we can use.
+ set(FOUND_YIELD FALSE)
+-
+-if (NOT FOUND_YIELD)
++set(QUICKSTEP_HAVE_CPP11_YIELD FALSE)
++message("QUICKSTEP_HAVE_CPP11_YIELD = ${QUICKSTEP_HAVE_CPP11_YIELD}")
++if (FOUND_YIELD)
+   CHECK_CXX_SOURCE_COMPILES("
+ #include <thread>
+ 
+@@ -131,6 +133,7 @@ int main() {
+   endif()
+ endif()
+ 
++message("QUICKSTEP_HAVE_CPP11_YIELD = ${QUICKSTEP_HAVE_CPP11_YIELD}")
+ if (NOT FOUND_YIELD)
+   CHECK_CXX_SOURCE_COMPILES("
+ #include <sched.h>
+@@ -142,6 +145,7 @@ int main() {
+   " QUICKSTEP_HAVE_SCHED_YIELD)
+   if (QUICKSTEP_HAVE_SCHED_YIELD)
+     set(FOUND_YIELD TRUE)
++    message("found sched yield")
+   endif()
+ endif()
+ 
+@@ -159,6 +163,7 @@ int main() {
+   endif()
+ endif()
+ 
++message("QUICKSTEP_HAVE_CPP11_YIELD = ${QUICKSTEP_HAVE_CPP11_YIELD}")
+ if (NOT FOUND_YIELD)
+   CHECK_CXX_SOURCE_COMPILES("
+ #define WIN32_LEAN_AND_MEAN
+@@ -289,6 +294,7 @@ if (QUICKSTEP_HAVE_CPP11_THREADS)
+               Thread.hpp
+               cpp11/Thread.hpp)
+ elseif (QUICKSTEP_HAVE_POSIX_THREADS)
++  message("found pthreads")
+   add_library(quickstep_threading_ConditionVariable
+               ConditionVariable.cpp
+               ConditionVariable.hpp
+diff --git a/threading/SpinMutex.hpp b/threading/SpinMutex.hpp
+index 5ed14055..c3479a72 100644
+--- a/threading/SpinMutex.hpp
++++ b/threading/SpinMutex.hpp
+@@ -41,8 +41,9 @@ namespace quickstep {
+  **/
+ class SpinMutex {
+  public:
+-  SpinMutex() : locked_(false) {
+-  }
++  /*SpinMutex() : locked_(false) {
++  }*/
++  SpinMutex() { pthread_mutex_init(&plock, NULL); }
+ 
+   /**
+    * @note This call does NOT yield when contended. SpinMutex is intended
+@@ -52,21 +53,25 @@ class SpinMutex {
+    *       Linux) is a more appropriate choice.
+    **/
+   inline void lock() {
++    pthread_mutex_lock(&plock);
++    /*
+     bool previous_locked = false;
+     while (!locked_.compare_exchange_weak(previous_locked,
+                                           true,
+                                           std::memory_order_acquire,
+                                           std::memory_order_relaxed)) {
+       previous_locked = false;
+-    }
++    }*/
+   }
+ 
+   inline void unlock() {
+-    locked_.store(false, std::memory_order_release);
++    pthread_mutex_unlock(&plock); 
++    /*locked_.store(false, std::memory_order_release);*/
+   }
+ 
+  private:
+   std::atomic<bool> locked_;
++  pthread_mutex_t plock;
+ 
+   DISALLOW_COPY_AND_ASSIGN(SpinMutex);
+ };
+diff --git a/threading/SpinSharedMutex.hpp b/threading/SpinSharedMutex.hpp
+index 8b1060b8..a73da0a8 100644
+--- a/threading/SpinSharedMutex.hpp
++++ b/threading/SpinSharedMutex.hpp
+@@ -64,7 +64,7 @@ class SpinSharedMutex {
+     // be guaranteed to be visible.
+     std::uint32_t observed_state = state_.fetch_or(kWriteBit, std::memory_order_acquire);
+     while (observed_state & kWriteBit) {
+-      if (yield_when_contended) {
++      if (true/*yield_when_contended*/) {
+         ThreadUtil::Yield();
+       }
+       observed_state = state_.fetch_or(kWriteBit, std::memory_order_acquire);
+@@ -73,7 +73,7 @@ class SpinSharedMutex {
+ 
+     // Spin until there are no active readers.
+     while (observed_state != kWriteBit) {
+-      if (yield_when_contended) {
++      if (true/*yield_when_contended*/) {
+         ThreadUtil::Yield();
+       }
+       // Use 'std::memory_order_relaxed' to observe count of readers. This is
+@@ -107,7 +107,7 @@ class SpinSharedMutex {
+       // reader count that other threads would need to observe.
+       std::uint32_t observed_state = state_.fetch_sub(1, std::memory_order_relaxed);
+       while (observed_state & kWriteBit) {
+-        if (yield_when_contended) {
++        if (true/*yield_when_contended*/) {
+           ThreadUtil::Yield();
+         }
+         // Only use 'std::memory_order_relaxed' to check the write bit, avoiding
