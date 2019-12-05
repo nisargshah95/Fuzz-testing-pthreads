@@ -1,0 +1,79 @@
+Loading settings from quickstep.cfg
+QS=/fastdisk/quickstep/build/quickstep_cli_shell
+
+QS_ARGS_BASE="-printing_enabled=true"
+
+QS_ARGS_NUMA_LOAD=""
+
+QS_ARGS_NUMA_RUN="-preload_buffer_pool=false"
+
+CREATE_SQL="create.sql"
+
+LOAD_DATA=TRUE
+
+TPCH_DATA_PATH=/fastdisk/SQL-benchmark-data-generator/tpch-10
+
+QS_STORAGE=/slowdisk/qs_tpch_10_qstor
+
+QUERIES="ALL"
+/fastdisk/quickstep/build/quickstep_cli_shell -printing_enabled=true -preload_buffer_pool=false -storage_path=/slowdisk/qs_tpch_10_qstor
+Query 01.sql
+(4 rows)
+Query 02.sql
+(100 rows)
+Query 03.sql
+(10 rows)
+Query 04.sql
+(5 rows)
+Query 05.sql
+(5 rows)
+Query 06.sql
+(1 row)
+Query 07.sql
+(4 rows)
+Query 08.sql
+(2 rows)
+Query 09.sql
+(175 rows)
+Query 10.sql
+(20 rows)
+Query 11.sql
+(222710 rows)
+Query 12.sql
+(2 rows)
+Query 13.sql
+(46 rows)
+Query 14.sql
+(1 row)
+Query 15.sql
+(1 row)
+Query 16.sql
+(27840 rows)
+F1118 17:19:23.821888 38638 StorageBlockBase.hpp:44] Check failed: 0 == getRefCount() (0 vs. 1) Nonzero ref_count_ when deleting block (1, 3070)
+*** Check failure stack trace: ***
+    @     0x55ddf773ff1e  (unknown)
+    @     0x55ddf773fe66  (unknown)
+    @     0x55ddf773f7a7  (unknown)
+    @     0x55ddf7742c1c  (unknown)
+    @     0x55ddf7768da3  (unknown)
+    @     0x55ddf77690dc  (unknown)
+    @     0x55ddf77690f8  (unknown)
+    @     0x55ddf7766e0d  (unknown)
+    @     0x55ddf771409b  (unknown)
+    @     0x7ffb61fa0ec7  __libc_start_main
+    @     0x55ddf77129fa  (unknown)
+    @              (nil)  (unknown)
+./run-benchmark-v1.sh: line 88: 38638 Aborted                 $QSEXE < tmp.sql >> /fastdisk/SQL-benchmark/tpch/quickstep/test_10_3/${query}_c.out
+Quickstep failed on query 16, continuing to next query.
+Query 17.sql
+(1 row)
+Query 18.sql
+(100 rows)
+Query 19.sql
+(1 row)
+Query 20.sql
+(1804 rows)
+Query 21.sql
+(100 rows)
+Query 22.sql
+(7 rows)

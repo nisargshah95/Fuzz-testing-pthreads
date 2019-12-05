@@ -1,0 +1,10 @@
+gdb /fastdisk/quickstep/build/quickstep_cli_shell
+r -printing_enabled=true -num_workers=2 -worker_affinities=19,19 -preload_buffer_pool=false -storage_path=/slowdisk/qs_tpch_1_qstor < tmp.sql > query_c.out
+
+19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,
+
+
+
+
+r -printing_enabled=true -num_workers=10 -preload_buffer_pool=false -storage_path=/slowdisk/qs_tpch_1_qstor < tmp.sql > query_c.out
+set env GLOG_drop_log_memory 0

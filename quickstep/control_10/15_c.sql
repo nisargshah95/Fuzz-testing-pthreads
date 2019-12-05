@@ -1,0 +1,8 @@
+Starting Quickstep with 40 worker thread(s) and a 125.84 GB buffer pool.
+--num_workers is 40, but only specified 0 CPU affinities with --worker_affinities. 40 workers will be unaffinitized.
++-----------+-------------------------+----------------------------------------+---------------+------------------------+
+|s_suppkey  |s_name                   |s_address                               |s_phone        |total_revenue           |
++-----------+-------------------------+----------------------------------------+---------------+------------------------+
+|      69998|       Supplier#000069998|,ZT4VX2ygq9dLsG298SbYYSVUqeH,jhLSRVxNxGv|16-386-278-9829|      2194132.8165999991|
++-----------+-------------------------+----------------------------------------+---------------+------------------------+
+Time: 798.536 ms

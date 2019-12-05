@@ -1,0 +1,221 @@
+quickstep_cli_shell: Warning: SetUsageMessage() never called
+
+  Flags from /fastdisk/quickstep/cli/Flags.cpp:
+    -display_timing (Whether to display execution time of each statement.)
+      type: bool default: true
+    -initialize_db (If true, initialize a database.) type: bool default: false
+    -num_workers (Number of worker threads. If this value is specified and is
+      greater than 0, then this user-supplied value is used. Else (i.e. the
+      default case), we examine the reported hardware concurrency level, and
+      use that.) type: int32 default: 0
+    -preload_buffer_pool (If true, pre-load all known blocks into buffer pool
+      before accepting queries (should also set --buffer_pool_slots to be large
+      enough to accomodate the entire database).) type: bool default: false
+    -print_query (Print each input query statement. This is useful when running
+      a large number of queries in a batch.) type: bool default: false
+    -storage_path (Filesystem path to store the Quickstep database.)
+      type: string default: "qsstor/"
+    -worker_affinities (A comma-separated list of CPU IDs to pin worker threads
+      to (leaving this empty will cause all worker threads to inherit the
+      affinity mask of the Quickstep process, which typically means that they
+      will all be runable on any CPU according to the kernel's own scheduling
+      policy).) type: string default: ""
+
+  Flags from /fastdisk/quickstep/cli/PrintToScreen.cpp:
+    -printing_enabled (If true, print query results to screen normally. If
+      false, skip printing output (e.g. for benchmarking).) type: bool
+      default: true
+
+  Flags from /fastdisk/quickstep/cli/QuickstepCli.cpp:
+    -mode (Defines which interaction mode to use. Options are either 'local'
+      which uses a simple SQL command line interface via stdin (default). The
+      other option is to use 'network' which will open a port and accept
+      connections via an rpc interface. SQL queries will be accepted and
+      processed in the same manner as with the local cli.) type: string
+      default: "local"
+    -profile_file_name (If nonempty, enable profiling using GOOGLE CPU
+      Profiler, and write its output to the given file name. This flag has no
+      effect if ENABLE_GOOGLE_PROFILER CMake flag was not set during build. The
+      profiler only starts collecting samples after the first query, so that it
+      runs against a warm buffer pool and caches. If you want to profile
+      everything, including the first query run, set the environment variable
+      CPUPROFILE instead of passing this flag.) type: string default: ""
+
+
+
+  Flags from /fastdisk/quickstep/query_execution/ForemanSingleNode.cpp:
+    -min_load_per_worker (The minimum load defined as the number of pending
+      work orders for the worker. This information is used by the Foreman to
+      assign work orders to worker threads) type: uint64 default: 2
+
+  Flags from /fastdisk/quickstep/query_execution/PolicyEnforcerBase.cpp:
+    -profile_and_report_workorder_perf (If true, Quickstep will record the
+      exceution time of all the individual normal work orders and report it at
+      the end of query execution.) type: bool default: false
+
+  Flags from /fastdisk/quickstep/query_execution/PolicyEnforcerSingleNode.cpp:
+    -max_msgs_per_dispatch_round (Maximum number of messages that can be
+      allocated in a single round of dispatch of messages to the workers.)
+      type: uint64 default: 20
+
+  Flags from /fastdisk/quickstep/query_execution/QueryManagerBase.cpp:
+    -visualize_execution_dag (If true, visualize the execution plan DAG into a
+      graph in DOT format (DOT is a plain text graph description language)
+      which is then printed via stderr.) type: bool default: false
+
+
+
+  Flags from /fastdisk/quickstep/query_optimizer/ExecutionGenerator.cpp:
+    -aggregate_hashtable_type (HashTable implementation to use for aggregates
+      with GROUP BY (valid options are SeparateChaining or
+      LinearOpenAddressing)) type: string default: "SeparateChaining"
+    -join_hashtable_type (HashTable implementation to use for hash joins (valid
+      options are SeparateChaining or LinearOpenAddressing)) type: string
+      default: "SeparateChaining"
+    -num_aggregation_partitions (The number of partitions in
+      PartitionedHashTablePool used for performing the aggregation) type: int32
+      default: 41
+    -parallelize_load (Parallelize loading data files.) type: bool
+      default: true
+    -partition_aggregation_num_groups_threshold (The threshold used for
+      deciding whether the aggregation is done in a partitioned way or not)
+      type: uint64 default: 100000
+
+  Flags from /fastdisk/quickstep/query_optimizer/PhysicalGenerator.cpp:
+    -reorder_columns (Adjust the ordering of intermediate relations' columns to
+      improve copy performance.) type: bool default: true
+    -reorder_hash_joins (If true, apply hash join order optimization to each
+      group of hash joins. The optimization applies a greedy algorithm to favor
+      smaller cardinality and selective tables to be joined first, which is
+      suitable for queries on star-schema tables.) type: bool default: true
+    -use_eliminate_empty_node (If true, apply an optimization to eliminate
+      joins if at least one side is empty.) type: bool default: true
+    -use_filter_joins (If true, apply an optimization that strength-reduces
+      HashJoins to FilterJoins (implemented as LIPFilters attached to some
+      anchoring operators. Briefly speaking, in the case that the join
+      attribute has consecutive integer values bounded in a reasonably small
+      range, we build a BitVector on the build-side attribute and use the
+      BitVector to filter the probe side table.) type: bool default: true
+    -use_fuse_hash_select (If true, apply an optimization that moves build-side
+      Selection nodesinto the hash join operator instead.) type: bool
+      default: true
+    -use_lip_filters (If true, use LIP (Lookahead Information Passing) filters
+      to accelerate query processing. LIP filters are effective for queries on
+      star schema tables (e.g. the SSB benchmark) and snowflake schema tables
+      (e.g. the TPC-H benchmark).) type: bool default: true
+    -use_partition_rule (If true, apply an optimization to support partitioned
+      inputs. The optimization may add additional Selection for
+      repartitioning.) type: bool default: true
+    -visualize_plan (If true, visualize the final physical plan into a graph in
+      DOT format (DOT is a plain text graph description language). Then print
+      the generated graph through stderr.) type: bool default: false
+
+
+
+  Flags from /fastdisk/quickstep/query_optimizer/cost_model/StarSchemaSimpleCostModel.cpp:
+    -collision_free_vector_table_max_size (The maximum allowed key range
+      (number of entries) for using a CollisionFreeVectorTable.) type: int64
+      default: 1000000000
+
+
+
+  Flags from /fastdisk/quickstep/query_optimizer/rules/Partition.cpp:
+    -num_repartitions (Number of repartitions for a join.) type: uint64
+      default: 4
+
+  Flags from /fastdisk/quickstep/query_optimizer/rules/PushDownLowCostDisjunctivePredicate.cpp:
+    -push_down_disjunctive_predicate_cardinality_threshold (The cardinality
+      threshold for a stored relation for the
+      PushDownLowCostDisjunctivePredicate optimization rule to push down a
+      disjunctive predicate to pre-filter that relation.) type: uint64
+      default: 100
+    -push_down_disjunctive_predicate_selectivity_threshold (The estimated
+      selectivity threshold below which the PushDownLowCostDisjunctivePredicate
+      optimization rule will push down a disjunctive predicate to pre-filter a
+      stored relation.) type: double default: 0.20000000000000001
+
+  Flags from /fastdisk/quickstep/query_optimizer/rules/ReduceGroupByAttributes.cpp:
+    -reduce_group_by_attributes_threshold (The threshold for a stored
+      relation's number of attributes in a group-by clause for the
+      ReduceGroupByAttributes optimization rule to pull the stored relation up
+      the aggregation) type: uint64 default: 3
+
+  Flags from /fastdisk/quickstep/query_optimizer/rules/ReuseAggregateExpressions.cpp:
+    -reuse_aggregate_group_size_threshold (The threshold on estimated number of
+      groups for an aggregation below which the ReuseAggregateExpressions
+      optimization will be performed.) type: uint64 default: 1000
+    -reuse_aggregate_ratio_threshold (The threshold on the ratio of (# of
+      eliminable columns) to (# of original columns) for an aggregation above
+      which the ReuseAggregateExpressions optimization will be performed.)
+      type: double default: 0.29999999999999999
+
+
+
+  Flags from /fastdisk/quickstep/relational_operators/TextScanOperator.cpp:
+    -textscan_text_segment_size (Size of text segment in bytes the input text
+      files are split into in the TextScanOperator.) type: uint64
+      default: 262144
+
+
+
+  Flags from /fastdisk/quickstep/storage/StorageManager.cpp:
+    -block_domain (The unique domain for a distributed Quickstep instance.)
+      type: int32 default: 1
+    -buffer_pool_slots (By default the value is 0 and the system automatically
+      sets the buffer pool size/slots at 70-80% of the total installed memory.
+      The user can also explicity define the number of slots. The units for
+      this variable is the number of 2-megabyte slots that is allocated in the
+      buffer pool. This is a "soft" limit: the buffer pool may temporarily grow
+      larger than this size if the buffer manager is unable to evict enough
+      unreferenced blocks to make room for a new allocation.) type: uint64
+      default: 0
+
+
+
+  Flags from /fastdisk/quickstep/third_party/src/gflags/src/gflags.cc:
+    -flagfile (load flags from file) type: string default: ""
+    -fromenv (set flags from the environment [use 'export FLAGS_flag1=value'])
+      type: string default: ""
+    -tryfromenv (set flags from the environment if present) type: string
+      default: ""
+    -undefok (comma-separated list of flag names that it is okay to specify on
+      the command line even if the program does not define a flag with that
+      name.  IMPORTANT: flags in this list that have arguments MUST use the
+      flag=value format) type: string default: ""
+
+  Flags from /fastdisk/quickstep/third_party/src/gflags/src/gflags_completions.cc:
+    -tab_completion_columns (Number of columns to use in output for tab
+      completion) type: int32 default: 80
+    -tab_completion_word (If non-empty, HandleCommandLineCompletions() will
+      hijack the process and attempt to do bash-style command line flag
+      completion on this value.) type: string default: ""
+
+  Flags from /fastdisk/quickstep/third_party/src/gflags/src/gflags_reporting.cc:
+    -help (show help on all flags [tip: all flags can have two dashes])
+      type: bool default: false currently: true
+    -helpfull (show help on all flags -- same as -help) type: bool
+      default: false
+    -helpmatch (show help on modules whose name contains the specified substr)
+      type: string default: ""
+    -helpon (show help on the modules named by this flag value) type: string
+      default: ""
+    -helppackage (show help on all modules in the main package) type: bool
+      default: false
+    -helpshort (show help on only the main module for this program) type: bool
+      default: false
+    -helpxml (produce an xml version of help) type: bool default: false
+    -version (show version and build info and exit) type: bool default: false
+
+
+
+  Flags from /fastdisk/quickstep/third_party/src/tmb/src/message_bus.cc:
+    -tmb_receive_poll_interval (The number of milliseconds to sleep between
+      calls to ReceiveIfAvailableImpl() in the default active-polling
+      implementation of ReceiveImpl().) type: int32 default: 50
+
+
+
+  Flags from /fastdisk/quickstep/utility/ExecutionDAGVisualizer.cpp:
+    -visualize_execution_dag_partition_info (If true, display the operator
+      partition info in the visualized execution plan DAG. Valid iff
+      'visualize_execution_dag' turns on.) type: bool default: false

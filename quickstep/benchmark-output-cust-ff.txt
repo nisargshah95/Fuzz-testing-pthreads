@@ -1,0 +1,42 @@
+Loading settings from quickstep.cfg
+QS=/fastdisk/quickstep/build/quickstep_cli_shell
+
+QS_ARGS_BASE="-printing_enabled=true -num_workers=2 -worker_affinities=19,19"
+
+QS_ARGS_NUMA_LOAD=""
+
+QS_ARGS_NUMA_RUN="-preload_buffer_pool=false"
+
+CREATE_SQL="create.sql"
+
+LOAD_DATA=TRUE
+
+TPCH_DATA_PATH=/fastdisk/SQL-benchmark-data-generator/tpch-1
+
+QS_STORAGE=/slowdisk/qs_tpch_1_qstor
+
+QUERIES="ALL"
+/fastdisk/quickstep/build/quickstep_cli_shell -printing_enabled=true -num_workers=2 -worker_affinities=19,19 -preload_buffer_pool=false -storage_path=/slowdisk/qs_tpch_1_qstor
+Query 01.sql
+Query 02.sql
+Query 03.sql
+Query 04.sql
+Query 05.sql
+Query 06.sql
+Query 07.sql
+Query 08.sql
+Query 09.sql
+Query 10.sql
+Query 11.sql
+Query 12.sql
+Query 13.sql
+Query 14.sql
+Query 15.sql
+Query 16.sql
+Quickstep failed on query 16, continuing to next query.
+Query 17.sql
+Query 18.sql
+Query 19.sql
+Query 20.sql
+Query 21.sql
+Query 22.sql
